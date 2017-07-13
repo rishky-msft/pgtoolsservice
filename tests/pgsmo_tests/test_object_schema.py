@@ -25,6 +25,7 @@ class TestSchema(unittest.TestCase):
         props = ['_can_create', 'can_create', '_has_usage', 'has_usage']
         collections = [
             '_collations', 'collations',
+            '_foreign_tables', 'foreign_tables',
             '_functions', 'functions',
             '_sequences', 'sequences',
             '_tables', 'tables',
@@ -52,6 +53,8 @@ class TestSchema(unittest.TestCase):
         # Child objects
         self.assertIsInstance(schema._collations, NodeCollection)
         self.assertIs(schema.collations, schema._collations)
+        self.assertIsInstance(schema._foreign_tables, NodeCollection)
+        self.assertIs(schema.foreign_tables, schema._foreign_tables)
         self.assertIsInstance(schema._functions, NodeCollection)
         self.assertIs(schema.functions, schema._functions)
         self.assertIsInstance(schema._sequences, NodeCollection)

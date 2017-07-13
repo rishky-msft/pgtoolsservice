@@ -8,6 +8,7 @@ from typing import List, Optional
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.collation import Collation
+from pgsmo.objects.foreign_table import ForeignTable
 from pgsmo.objects.functions.function import Function
 from pgsmo.objects.sequence import Sequence
 from pgsmo.objects.table.table import Table
@@ -56,6 +57,9 @@ class Schema(node.NodeObject):
         self._collations: node.NodeCollection = self._register_child_collection(
             lambda: Collation.get_nodes_for_parent(self._conn, self._oid)
         )
+        self._foreign_tables: node.NodeCollection = self._register_child_collection(
+            lambda: ForeignTable.get_nodes_for_parent(self._conn, self._oid)
+        )
         self._functions: node.NodeCollection = self._register_child_collection(
             lambda: Function.get_nodes_for_parent(self._conn, self._oid)
         )
@@ -82,6 +86,10 @@ class Schema(node.NodeObject):
     @property
     def collations(self) -> node.NodeCollection:
         return self._collations
+
+    @property
+    def foreign_tables(self) -> node.NodeCollection:
+        return self._foreign_tables
 
     @property
     def functions(self) -> node.NodeCollection:

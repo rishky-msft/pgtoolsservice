@@ -3,6 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.schema.schema import Schema
+from pgsmo.objects.foreign_table.foreign_table import ForeignTable
 
-__all__ = ['Schema']
+__all__ = ['ForeignTable']
