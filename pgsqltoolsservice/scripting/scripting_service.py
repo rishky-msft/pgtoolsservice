@@ -45,58 +45,62 @@ class ScriptingService(object):
 
     # HELPER FUNCTIONS ######################################################
 
-    def script_as_create(self, connection, metadata: ObjectMetadata) -> str:
+    @staticmethod
+    def _script_as_create(connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for create operations """
         scripter = Scripter(connection)
-        if (metadata["metadataTypeName"] == 'Database'):
+        if metadata.metadata_type_name == 'Database':
             return scripter.get_database_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'View'):
+        elif metadata.metadata_type_name == 'View':
             return scripter.get_view_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Table'):
+        elif metadata.metadata_type_name == 'Table':
             return scripter.get_table_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Schema'):
+        elif metadata.metadata_type_name == 'Schema':
             return scripter.get_schema_create_script(metadata)
-        elif (metadata["metdataTypeName"] == 'Role'):
+        elif metadata.metadata_type_name == 'Role':
             return scripter.get_role_create_script(metadata)
 
-    def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
+    @staticmethod
+    def _script_as_select(connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
         scripter = Scripter(connection)
         return scripter.script_as_select(metadata)
 
-    def script_as_update(self, connection, metadata: ObjectMetadata) -> str:
+    @staticmethod
+    def _script_as_update(connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for update operations """
         scripter = Scripter(connection)
-        metadataType = metadata["metadataTypeName"]
-        if (metadataType == 'View'):
+        metadata_type = metadata.metadata_type_name
+        if metadata_type == 'View':
             return scripter.get_view_update_script(metadata)
-        elif (metadataType == 'Table'):
+        elif metadata_type == 'Table':
             return scripter.get_table_update_script(metadata)
-        elif (metadataType == 'Schema'):
+        elif metadata_type == 'Schema':
             return scripter.get_schema_update_script(metadata)
 
-    def script_as_delete(self, connection, metadata: ObjectMetadata) -> str:
+    @staticmethod
+    def _script_as_delete(connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for insert operations """
         scripter = Scripter(connection)
-        metadataType = metadata["metadataTypeName"]
-        if (metadataType == 'Database'):
+        metadata_type = metadata.metadata_type_name
+        if metadata_type == 'Database':
             return scripter.get_database_delete_script(metadata)
-        elif (metadataType == 'View'):
+        elif metadata_type == 'View':
             return scripter.get_view_delete_script(metadata)
-        elif (metadataType == 'Table'):
+        elif metadata_type == 'Table':
             return scripter.get_table_delete_script(metadata)
-        elif (metadataType == 'Schema'):
+        elif metadata_type == 'Schema':
             return scripter.get_schema_delete_script(metadata)
 
     def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata):
         """Helper function to get the correct script based on operation"""
-        if (scripting_operation == ScriptOperation.Select.value):
-            return self.script_as_select(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Create.value):
-            return self.script_as_create(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Update.value):
-            return self.script_as_update(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Delete.value):
-            return self.script_as_delete(connection, metadata)
+        if scripting_operation == ScriptOperation.Select.value:
+            return self._script_as_select(connection, metadata)
+        elif scripting_operation == ScriptOperation.Create.value:
+            return self._script_as_create(connection, metadata)
+        elif scripting_operation == ScriptOperation.Update.value:
+            return self._script_as_update(connection, metadata)
+        elif scripting_operation == ScriptOperation.Delete.value:
+            return self._script_as_delete(connection, metadata)
         else:
             raise Exception("Scripting Operation not supported")

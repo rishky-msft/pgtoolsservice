@@ -5,30 +5,17 @@
 
 import unittest
 from unittest import mock
-from typing import List, Dict  # noqa
 
+from pgsmo import Database, Role, Schema, Server, Table, View
 from pgsqltoolsservice.connection import ConnectionService
-from pgsqltoolsservice.connection.contracts.common import ConnectionType
-from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.hosting import (
-    JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
-)
-import tests.utils as utils
+from pgsqltoolsservice.connection.contracts import ConnectionType
+from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata
+from pgsqltoolsservice.scripting import ScriptingService
 from pgsqltoolsservice.scripting.scripter import Scripter
-from pgsqltoolsservice.scripting.scripting_service import ScriptingService
-from pgsqltoolsservice.scripting.contracts.scriptas_request import (
-    ScriptOperation, ScriptAsParameters
-)
-
-# OBJECT IMPORTS
-from pgsmo.objects.table.table import Table
-from pgsmo.objects.view.view import View
-from pgsmo.objects.database.database import Database
-from pgsmo.objects.server.server import Server
-from pgsmo.objects.schema.schema import Schema, TEMPLATE_ROOT
-from pgsmo.objects.role.role import Role
-
-
+from pgsqltoolsservice.scripting.contracts import ScriptOperation, ScriptAsParameters
+from pgsqltoolsservice.utils import constants
+import tests.utils as utils
 """Module for testing the scripting service"""
 
 
@@ -43,7 +30,7 @@ class TestScriptingService(unittest.TestCase):
         self.connection = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"}, cursor=self.cursor)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
-        self.service_provider = ServiceProvider(None, {})
+        self.service_provider = utils.get_mock_service_provider({})
         self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service}
         self.service_provider._is_initialized = True
         self.request_context = utils.MockRequestContext()
@@ -113,25 +100,28 @@ class TestScriptingService(unittest.TestCase):
                       ScriptOperation.Update, ScriptOperation.Delete]
         objects = ["Database", "View", "Table", "Schema", "Role"]
 
-        mock_service.script_as_select = mock.MagicMock()
-        mock_service.script_as_create = mock.MagicMock()
-        mock_service.script_as_update = mock.MagicMock()
-        mock_service.script_as_delete = mock.MagicMock()
+        mock_service._script_as_select = mock.MagicMock()
+        mock_service._script_as_create = mock.MagicMock()
+        mock_service._script_as_update = mock.MagicMock()
+        mock_service._script_as_delete = mock.MagicMock()
 
         # When called with various scripting operations and objects
         for op in operations:
             for obj in objects:
-                mock_service._scripting_operation(op.value, self.connection, {"metadataTypeName": obj})
+                metadata = ObjectMetadata.from_data(0, obj, 'name')
+                mock_service._scripting_operation(op.value, self.connection, metadata)
 
         # I should see calls being made for the different script operations
-        self.assertEqual(True, mock_service.script_as_select.called)
-        self.assertEqual(True, mock_service.script_as_create.called)
-        self.assertEqual(True, mock_service.script_as_update.called)
+        mock_service._script_as_select.assert_called_once()
+        mock_service._script_as_create.assert_called_once()
+        mock_service._script_as_delete.assert_called_once()
+        mock_service._script_as_update.assert_called_once()
 
         # If I use an invalid script operation, I should get back an exception
         for obj in objects:
             with self.assertRaises(Exception):
-                self.assertRaises(mock_service._scripting_operation("bogus value", self.connection, {"metadataTypeName": obj}))
+                metadata = ObjectMetadata.from_data(0, obj, 'name')
+                self.assertRaises(mock_service._scripting_operation(-2, self.connection, metadata))
 
     def test_script_as_select(self):
         """Test getting select script for all objects"""
@@ -139,14 +129,11 @@ class TestScriptingService(unittest.TestCase):
         mock_connection = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
         scripter = Scripter(mock_connection)
         service = ScriptingService()
-        metadata = {
-            "schema": "public",
-            "name": "foo"
-        }
-        service.script_as_select = mock.MagicMock(return_value=scripter.script_as_select(metadata))
+        metadata = ObjectMetadata.from_data(0, "Table", "foo", schema="public")
+        service._script_as_select = mock.MagicMock(return_value=scripter.script_as_select(metadata))
 
         # If I try to get select script for any object
-        result = service.script_as_select()
+        result = service._script_as_select(None, metadata)
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
@@ -204,7 +191,7 @@ class TestScriptingService(unittest.TestCase):
 
     # CREATE SCRIPTS ##############################################################
 
-    def assertNotNoneOrEmpty(self, result: str) -> bool:
+    def assertNotNoneOrEmpty(self, result: str):
         """Assertion to confirm a string to be not none or empty"""
         self.assertIsNotNone(result) and self.assertTrue(len(result))
 
@@ -216,21 +203,21 @@ class TestScriptingService(unittest.TestCase):
         # Set up the mocks
         mock_table = Table(None, None, 'test')
 
-        def table_mock_fn(connection):
+        def table_mock_fn():
             mock_table._template_root = mock.MagicMock(return_value=Table.TEMPLATE_ROOT)
             mock_table._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_table.create_script(connection)
+            result = mock_table.create_script()
             return result
 
         def scripter_mock_fn():
-            mock_table.create_script = mock.MagicMock(return_value=table_mock_fn(self.connection))
+            mock_table.create_script = mock.MagicMock(return_value=table_mock_fn())
             return mock_table.create_script()
 
         scripter.get_table_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_table_create_script())
+        service._script_as_create = mock.MagicMock(return_value=scripter.get_table_create_script())
 
         # If I try to get select script for any object
-        result = service.script_as_create()
+        result = service._script_as_create()
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
@@ -240,21 +227,21 @@ class TestScriptingService(unittest.TestCase):
         # Set up the mocks
         mock_view = View(None, None, 'test')
 
-        def view_mock_fn(connection):
+        def view_mock_fn():
             mock_view._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
             mock_view._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_view.create_script(connection)
+            result = mock_view.create_script()
             return result
 
         def scripter_mock_fn():
-            mock_view.create_script = mock.MagicMock(return_value=view_mock_fn(self.connection))
+            mock_view.create_script = mock.MagicMock(return_value=view_mock_fn())
             return mock_view.create_script()
 
         scripter.get_view_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_view_create_script())
+        service._script_as_create = mock.MagicMock(return_value=scripter.get_view_create_script())
 
         # If I try to get select script for any object
-        result = service.script_as_create()
+        result = service._script_as_create()
 
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
@@ -265,21 +252,21 @@ class TestScriptingService(unittest.TestCase):
         mock_server = Server(self.connection)
         mock_database = Database(mock_server, 'test')
 
-        def database_mock_fn(connection):
+        def database_mock_fn():
             mock_database._template_root = mock.MagicMock(return_value=Database.TEMPLATE_ROOT)
             mock_database._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_database.create_script(connection)
+            result = mock_database.create_script()
             return result
 
         def scripter_mock_fn():
-            mock_database.create_script = mock.MagicMock(return_value=database_mock_fn(self.connection))
+            mock_database.create_script = mock.MagicMock(return_value=database_mock_fn())
             return mock_database.create_script()
 
         scripter.get_database_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_database_create_script())
+        service._script_as_create = mock.MagicMock(return_value=scripter.get_database_create_script())
 
         # If I try to get select script for any object
-        result = service.script_as_create()
+        result = service._script_as_create()
 
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
@@ -289,21 +276,21 @@ class TestScriptingService(unittest.TestCase):
         # Set up the mocks
         mock_schema = Schema(None, None, 'test')
 
-        def schema_mock_fn(connection):
-            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
+        def schema_mock_fn():
+            mock_schema._template_root = mock.MagicMock(return_value=Schema.TEMPLATE_ROOT)
             mock_schema._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_schema.create_script(connection)
+            result = mock_schema.create_script()
             return result
 
         def scripter_mock_fn():
-            mock_schema.create_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
+            mock_schema.create_script = mock.MagicMock(return_value=schema_mock_fn())
             return mock_schema.create_script()
 
         scripter.get_schema_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_schema_create_script())
+        service._script_as_create = mock.MagicMock(return_value=scripter.get_schema_create_script())
 
         # If I try to get select script for any object
-        result = service.script_as_create()
+        result = service._script_as_create()
 
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
@@ -313,21 +300,21 @@ class TestScriptingService(unittest.TestCase):
         # Set up the mocks
         mock_role = Role(None, 'test')
 
-        def role_mock_fn(connection):
+        def role_mock_fn():
             mock_role._template_root = mock.MagicMock(return_value=Role.TEMPLATE_ROOT)
             mock_role._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_role.create_script(connection)
+            result = mock_role.create_script()
             return result
 
         def scripter_mock_fn():
-            mock_role.create_script = mock.MagicMock(return_value=role_mock_fn(self.connection))
+            mock_role.create_script = mock.MagicMock(return_value=role_mock_fn())
             return mock_role.create_script()
 
         scripter.get_role_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_role_create_script())
+        service._script_as_create = mock.MagicMock(return_value=scripter.get_role_create_script())
 
         # If I try to get select script for any object
-        result = service.script_as_create()
+        result = service._script_as_create()
 
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
@@ -339,21 +326,21 @@ class TestScriptingService(unittest.TestCase):
         # Set up the mocks
         mock_table = Table(None, None, 'test')
 
-        def table_mock_fn(connection):
+        def table_mock_fn():
             mock_table._template_root = mock.MagicMock(return_value=Table.TEMPLATE_ROOT)
             mock_table._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_table.delete_script(connection)
+            result = mock_table.delete_script()
             return result
 
         def scripter_mock_fn():
-            mock_table.delete_script = mock.MagicMock(return_value=table_mock_fn(self.connection))
+            mock_table.delete_script = mock.MagicMock(return_value=table_mock_fn())
             return mock_table.delete_script()
 
         scripter.get_table_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_table_delete_script())
+        service._script_as_delete = mock.MagicMock(return_value=scripter.get_table_delete_script())
 
         # If I try to get select script for any object
-        result = service.script_as_delete()
+        result = service._script_as_delete()
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
@@ -366,7 +353,7 @@ class TestScriptingService(unittest.TestCase):
         def view_mock_fn(connection):
             mock_view._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
             mock_view._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_view.delete_script(connection)
+            result = mock_view.delete_script()
             return result
 
         def scripter_mock_fn():
@@ -374,10 +361,10 @@ class TestScriptingService(unittest.TestCase):
             return mock_view.delete_script()
 
         scripter.get_view_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_view_delete_script())
+        service._script_as_delete = mock.MagicMock(return_value=scripter.get_view_delete_script())
 
         # If I try to get select script for any object
-        result = service.script_as_delete()
+        result = service._script_as_delete()
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
@@ -388,21 +375,21 @@ class TestScriptingService(unittest.TestCase):
         mock_server = Server(self.connection)
         mock_database = Database(mock_server, 'test')
 
-        def database_mock_fn(connection):
+        def database_mock_fn():
             mock_database._template_root = mock.MagicMock(return_value=Database.TEMPLATE_ROOT)
             mock_database._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_database.delete_script(connection)
+            result = mock_database.delete_script()
             return result
 
         def scripter_mock_fn():
-            mock_database.delete_script = mock.MagicMock(return_value=database_mock_fn(self.connection))
+            mock_database.delete_script = mock.MagicMock(return_value=database_mock_fn())
             return mock_database.delete_script()
 
         scripter.get_database_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_database_delete_script())
+        service._script_as_delete = mock.MagicMock(return_value=scripter.get_database_delete_script())
 
         # If I try to get select script for any object
-        result = service.script_as_delete()
+        result = service._script_as_delete()
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
@@ -412,21 +399,21 @@ class TestScriptingService(unittest.TestCase):
         # Set up the mocks
         mock_schema = Schema(None, None, 'test')
 
-        def schema_mock_fn(connection):
-            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
+        def schema_mock_fn():
+            mock_schema._template_root = mock.MagicMock(return_value=Schema.TEMPLATE_ROOT)
             mock_schema._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            result = mock_schema.delete_script(connection)
+            result = mock_schema.delete_script()
             return result
 
         def scripter_mock_fn():
-            mock_schema.delete_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
+            mock_schema.delete_script = mock.MagicMock(return_value=schema_mock_fn())
             return mock_schema.delete_script()
 
         scripter.get_schema_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_schema_delete_script())
+        service._script_as_delete = mock.MagicMock(return_value=scripter.get_schema_delete_script())
 
         # If I try to get select script for any object
-        result = service.script_as_delete()
+        result = service._script_as_delete()
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
@@ -438,21 +425,21 @@ class TestScriptingService(unittest.TestCase):
         # Set up the mocks
         mock_schema = Schema(None, None, 'test')
 
-        def schema_mock_fn(connection):
-            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
+        def schema_mock_fn():
+            mock_schema._template_root = mock.MagicMock(return_value=Schema.TEMPLATE_ROOT)
             mock_schema._update_query_data = mock.MagicMock(return_value={"data": {"name": "test"}, "o_data": {"name": "test"}})
-            result = mock_schema.update_script(connection)
+            result = mock_schema.update_script()
             return result
 
         def scripter_mock_fn():
-            mock_schema.update_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
+            mock_schema.update_script = mock.MagicMock(return_value=schema_mock_fn())
             return mock_schema.update_script()
 
         scripter.get_schema_update_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_update = mock.MagicMock(return_value=scripter.get_schema_update_script())
+        service._script_as_update = mock.MagicMock(return_value=scripter.get_schema_update_script())
 
         # If I try to get select script for any object
-        result = service.script_as_update()
+        result = service._script_as_update()
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
@@ -465,7 +452,7 @@ class TestScriptingService(unittest.TestCase):
         def role_mock_fn(connection):
             mock_role._template_root = mock.MagicMock(return_value=Role.TEMPLATE_ROOT)
             mock_role._update_query_data = mock.MagicMock(return_value={"data": {"name": "test"}, "o_data": {"name": "test"}})
-            result = mock_role.update_script(connection)
+            result = mock_role.update_script()
             return result
 
         def scripter_mock_fn():
@@ -473,10 +460,10 @@ class TestScriptingService(unittest.TestCase):
             return mock_role.update_script()
 
         scripter.get_role_update_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_update = mock.MagicMock(return_value=scripter.get_role_update_script())
+        service._script_as_update = mock.MagicMock(return_value=scripter.get_role_update_script())
 
         # If I try to get select script for any object
-        result = service.script_as_update()
+        result = service._script_as_update()
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)

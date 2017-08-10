@@ -96,55 +96,32 @@ class View(node.NodeObject):
 
     # METHODS ##############################################################
 
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a view """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(connection, query_file, data)
+        data = {"data": {
+            "name": self.name,
+            "schema": self.parent.name,
+            "definition": self.definition,
+            "check_option": self.check_option,
+            "security_barrier": self.security_barrier
+        }}
+        return self._get_template("create.sql", data)
 
-    def delete_script(self, connection: querying.ServerConnection) -> str:
+    def delete_script(self) -> str:
         """ Function to retrieve delete scripts for a view """
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)
-
-    def update_script(self, connection: querying.ServerConnection) -> str:
-        """ Function to retrieve update scripts for a view """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(connection, query_file, data)
-
-    # IMPLEMENTATION DETAILS ################################################
-    @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
-
-    # HELPER METHODS #######################################################
-
-    def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
-        data = {
-            "data": {
-                "name": self.name,
-                "schema": self.parent.name,
-                "definition": self.definition,
-                "check_option": self.check_option,
-                "security_barrier": self.security_barrier
-            }}
-        return data
-
-    def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
         data = {
             "vid": self._oid,
             "name": self.name,
             "nspname": self.nspname
         }
-        return data
+        return self._get_template("delete.sql", data)
 
-    def _update_query_data(self) -> dict:
-        """ Provides data input for update script """
-        data = {"data": {
+    def update_script(self) -> str:
+        """ Function to retrieve update scripts for a view """
+        data = {"data": {}}
+        return self._get_template("update.sql", data)
 
-        }}
-        return data
+    # IMPLEMENTATION DETAILS ################################################
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT

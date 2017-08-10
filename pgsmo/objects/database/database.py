@@ -106,28 +106,8 @@ class Database(node.NodeObject):
 
     # METHODS ##############################################################
 
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a database """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(connection, query_file, data)
-
-    def delete_script(self, connection: querying.ServerConnection) -> str:
-        """ Function to retrieve delete scripts for a database """
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)
-
-    # IMPLEMENTATION DETAILS ###############################################
-    @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
-        return cls.TEMPLATE_ROOT
-
-    # HELPER METHODS #######################################################
-
-    # QUERY INPUT METHODS ##################################################
-    def _create_query_data(self) -> dict:
-        """ Return the data input for create query """
         data = {"data": {
             "name": self.name,
             "encoding": self.encoding,
@@ -137,12 +117,17 @@ class Database(node.NodeObject):
             "datconnlimit": self.datconnlimit,
             "spcname": self.spcname
         }}
-        return data
+        return self._get_template("create.sql", data)
 
-    def _delete_query_data(self) -> dict:
-        """ Return the data input for delete query """
+    def delete_script(self) -> str:
+        """ Function to retrieve delete scripts for a database """
         data = {
             "did": self._oid,
             "datname": self._name
         }
-        return data
+        return self._get_template("delete.sql", data)
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT

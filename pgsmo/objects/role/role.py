@@ -124,24 +124,9 @@ class Role(NodeObject):
 
     # SCRIPTING METHODS ####################################################
 
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a role """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(connection, query_file, data)
-
-    def update_script(self, connection: querying.ServerConnection) -> str:
-        """ Function to retrieve create scripts for a role """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        filters = {'hasAny': templating.has_any}
-        return self._get_template(connection, query_file, data, filters_to_add=filters)
-
-    # HELPER METHODS ##################################################################
-
-    def _create_query_data(self):
-        """ Gives the data object for create query """
-        return {"data": {
+        data = {"data": {
             "rolcanlogin": self.can_login,
             "rolsuper": self.super,
             "rolcreatedb": self.createdb,
@@ -158,10 +143,11 @@ class Role(NodeObject):
             "variables": self.variables,
             "description": self.description
         }}
+        return self._get_template("create.sql", data)
 
-    def _update_query_data(self):
-        """ Gives the data object for update query """
-        return {
+    def update_script(self) -> str:
+        """ Function to retrieve create scripts for a role """
+        data = {
             "data": {
                 "rolname": self.name,
                 "rolcanlogin": self.can_login,
@@ -182,3 +168,5 @@ class Role(NodeObject):
                 "description": self.description
             }, "rolCanLogin": self.can_login
         }
+        filters = {'hasAny': templating.has_any}
+        return self._get_template("update.sql", data, filters_to_add=filters)

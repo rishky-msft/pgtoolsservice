@@ -138,27 +138,8 @@ class Schema(node.NodeObject):
         return MACRO_ROOT
 
     # SCRIPTING METHODS ##############################################################
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a schema """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(connection, query_file, data, paths_to_add=[self._macro_root()])
-
-    def delete_script(self, connection: querying.ServerConnection) -> str:
-        """ Function to retrieve delete scripts for schema """
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)
-
-    def update_script(self, connection: querying.ServerConnection) -> str:
-        """ Function to retrieve update scripts for schema """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(connection, query_file, data, paths_to_add=[self._macro_root()])
-
-    #  HELPER METHODS ######################################################
-    def _create_query_data(self) -> dict:
-        """ Function that returns data for create script """
         data = {"data": {
             "name": self.name,
             "namespaceowner": self.namespaceowner,
@@ -166,18 +147,18 @@ class Schema(node.NodeObject):
             "nspacl": self.nspacl,
             "seclabels": self.seclabels
         }}
-        return data
+        return self._get_template("create.sql", data, paths_to_add=[self._macro_root()])
 
-    def _delete_query_data(self) -> dict:
-        """ Function that returns data for delete script """
+    def delete_script(self) -> str:
+        """ Function to retrieve delete scripts for schema """
         data = {
             "name": self.name,
             "cascade": self.cascade
         }
-        return data
+        return self._get_template("delete.sql", data)
 
-    def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+    def update_script(self) -> str:
+        """ Function to retrieve update scripts for schema """
         data = {
             "data": {
                 "name": self.name,
@@ -192,4 +173,4 @@ class Schema(node.NodeObject):
                 "description": ""
             }
         }
-        return data
+        return self._get_template("update.sql", data, paths_to_add=[self._macro_root()])

@@ -214,29 +214,8 @@ class Table(node.NodeObject):
         return cls.TEMPLATE_ROOT
 
     # SCRIPTING METHODS ##############################################################
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a table """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(connection, query_file, data)
-
-    def delete_script(self, connection: querying.ServerConnection) -> str:
-        """ Function to retrieve delete scripts for a table"""
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)
-
-    def update_script(self, connection: querying.ServerConnection) -> str:
-        """ Function to retrieve update scripts for a table"""
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(connection, query_file, data)
-
-    # HELPER METHODS ####################################################################
-    # QUERY DATA BUILDING METHODS #######################################################
-
-    def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
         data = {"data": {
             "name": self.name,
             "coll_inherits": self.coll_inherits,
@@ -253,20 +232,20 @@ class Table(node.NodeObject):
             "relowner": self.owner,
             "schema": self.parent.name
         }}
-        return data
+        return self._get_template("create.sql", data)
 
-    def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+    def delete_script(self) -> str:
+        """ Function to retrieve delete scripts for a table"""
         data = {
             "data": {
                 "name": self.name,
                 "schema": self.parent.name
             }, "cascade": self.cascade
         }
-        return data
+        return self._get_template("delete.sql", data)
 
-    def _update_query_data(self) -> dict:
-        """ Provides data input for update script """
+    def update_script(self) -> str:
+        """ Function to retrieve update scripts for a table"""
         data = {"data": {
             "name": self.name,
             "schema": self.parent.name,
@@ -286,4 +265,4 @@ class Table(node.NodeObject):
             "relacl": self.acl,
             "seclabels": self.seclabels
         }}
-        return data
+        return self._get_template("update.sql", data)
