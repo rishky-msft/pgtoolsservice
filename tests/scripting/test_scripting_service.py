@@ -591,8 +591,6 @@ class TestScriptingService(unittest.TestCase):
 
         scripter.get_update_script = mock.MagicMock(return_value=scripter_mock_fn())
         service.script_as_update = mock.MagicMock(return_value=scripter.get_update_script())
-<<<<<<< HEAD
-=======
 
         # If I try to get select script for any object
         result = service.script_as_update()
@@ -642,7 +640,6 @@ class TestScriptingService(unittest.TestCase):
 
         scripter.get_function_update_script = mock.MagicMock(return_value=scripter_mock_fn())
         service.script_as_update = mock.MagicMock(return_value=scripter.get_function_update_script())
->>>>>>> master
 
         # If I try to get select script for any object
         result = service.script_as_update()
