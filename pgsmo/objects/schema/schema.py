@@ -13,6 +13,7 @@ from pgsmo.objects.sequence import Sequence
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
+from pgsmo.objects.datatype.datatype import DataType
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
 
@@ -69,6 +70,9 @@ class Schema(node.NodeObject):
         self._views: node.NodeCollection = self._register_child_collection(
             lambda: View.get_nodes_for_parent(self._server, self)
         )
+        self._datatypes: node.NodeCollection = self._register_child_collection(
+            lambda: DataType.get_nodes_for_parent(self._server, self)
+        )
 
     # PROPERTIES ###########################################################
     @property
@@ -104,6 +108,11 @@ class Schema(node.NodeObject):
     def views(self) -> node.NodeCollection:
         return self._views
 
+    @property
+    def datatypes(self) -> node.NodeCollection:
+        return self._datatypes
+
+    # FULL PROPERTIES ###########################################################
     @property
     def namespaceowner(self):
         return self._full_properties.get("namespaceowner", "")
