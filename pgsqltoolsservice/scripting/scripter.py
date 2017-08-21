@@ -4,6 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsmo.objects.server.server import Server
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+from pgsmo.objects.database.database import Database
+from pgsmo.objects.node_object import NodeCollection
 
 
 class Scripter(object):
@@ -18,7 +21,7 @@ class Scripter(object):
 
     # SELECT ##################################################################
 
-    def script_as_select(self, metadata) -> str:
+    def script_as_select(self, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
         schema = metadata.schema
         name = metadata.name
@@ -29,7 +32,7 @@ class Scripter(object):
 
     # CREATE ##################################################################
 
-    def get_create_script(self, metadata) -> str:
+    def get_create_script(self, metadata: ObjectMetadata) -> str:
         """ Get create script for all objects """
         try:
             # get object from server
@@ -45,7 +48,7 @@ class Scripter(object):
             return None
 
     # DELETE ##################################################################
-    def get_delete_script(self, metadata) -> str:
+    def get_delete_script(self, metadata: ObjectMetadata) -> str:
         """ Get delete script for all objects """
         try:
             # get object from server
@@ -60,7 +63,7 @@ class Scripter(object):
 
     # UPDATE ##################################################################
 
-    def get_update_script(self, metadata) -> str:
+    def get_update_script(self, metadata: ObjectMetadata) -> str:
         """ Get update script for tables """
         try:
             # get object from server
@@ -75,47 +78,35 @@ class Scripter(object):
 
     # HELPER METHODS ##########################################################
 
-    def _get_schema_from_db(self, schema_name, databases):
+    def _get_schema_from_db(self, schema_name: str, databases: NodeCollection[Database]):
         try:
             schema = databases[schema_name]
             return schema
         except NameError:
             return None
 
-    def _find_schema(self, metadata):
+    def _find_schema(self, metadata: ObjectMetadata):
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
-        databases = self.server.databases
+        database = self.server.maintenance_db
         parent_schema = None
         try:
-            for db in databases:
-                if db.schemas is not None:
-                    parent_schema = self._get_schema_from_db(schema_name, db.schemas)
-                    if parent_schema is not None:
-                        return parent_schema
+            if database.schemas is not None:
+                parent_schema = self._get_schema_from_db(schema_name, database.schemas)
+                if parent_schema is not None:
+                    return parent_schema
         except Exception:
             return None
 
-    def _find_table(self, metadata):
+    def _find_table(self, metadata: ObjectMetadata):
         """ Find the table in the server to script as """
-        try:
-            table_name = metadata.name
-            parent_schema = self._find_schema(metadata)
-            for table in parent_schema.tables:
-                return parent_schema.tables[table_name]
-        except Exception:
-            return None
+        return self._find_schema_child_object('tables', metadata)
 
-    def _find_function(self, metadata):
+    def _find_function(self, metadata: ObjectMetadata):
         """ Find the function in the server to script as """
-        try:
-            function_name = metadata.name
-            parent_schema = self._find_schema(metadata)
-            return parent_schema.functions[function_name]
-        except Exception:
-            return None
+        return self._find_schema_child_object('functions', metadata)
 
-    def _find_database(self, metadata):
+    def _find_database(self, metadata: ObjectMetadata):
         """ Find a database in the server """
         try:
             database_name = metadata.name
@@ -124,17 +115,11 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_view(self, metadata):
+    def _find_view(self, metadata: ObjectMetadata):
         """ Find a view in the server """
-        try:
-            view_name = metadata.name
-            parent_schema = self._find_schema(metadata)
-            view = parent_schema.views[view_name]
-            return view
-        except Exception:
-            return None
+        return self._find_schema_child_object('views', metadata)
 
-    def _find_role(self, metadata):
+    def _find_role(self, metadata: ObjectMetadata):
         """ Find a role in the server """
         try:
             role_name = metadata.name
@@ -143,16 +128,35 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_sequence(self, metadata):
+    def _find_sequence(self, metadata: ObjectMetadata):
         """ Find a sequence in the server """
+        return self._find_schema_child_object('sequences', metadata)
+
+    def _find_datatype(self, metadata: ObjectMetadata):
+        """ Find a datatype in the server """
+        return self._find_schema_child_object('datatypes', metadata)
+
+    def _find_schema_child_object(self, prop_name: str, metadata: ObjectMetadata):
+        """
+        Find an object that is a child of a schema object.
+        :param prop_name: name of the property used to query for objects
+        of this type on the schema 
+        :param metadata: metadata including object name and schema name
+        """
         try:
-            sequence_name = metadata.name
-            sequence = self.server.sequences[sequence_name]
-            return sequence
+            obj_name = metadata.name
+            parent_schema = self._find_schema(metadata)
+            if not parent_schema:
+                return None
+            obj_collection = getattr(parent_schema, prop_name)
+            if not obj_collection:
+                return None
+            obj = obj_collection[obj_name]
+            return obj
         except Exception:
             return None
 
-    def _get_object(self, object_type: str, metadata):
+    def _get_object(self, object_type: str, metadata: ObjectMetadata):
         """ Retrieve a given object """
         object_map = {
             "Table": self._find_table,
@@ -160,6 +164,8 @@ class Scripter(object):
             "Database": self._find_database,
             "View": self._find_view,
             "Role": self._find_role,
-            "Function": self._find_function
+            "Function": self._find_function,
+            "Sequence": self._find_sequence,
+            "DataType": self._find_datatype
         }
         return object_map[object_type](metadata)

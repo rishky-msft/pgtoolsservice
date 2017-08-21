@@ -15,6 +15,7 @@ from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
+from pgsmo.objects.datatype.datatype import DataType
 
 __all__ = [
     'CheckConstraint',
@@ -33,5 +34,6 @@ __all__ = [
     'Server',
     'Table',
     'Trigger',
-    'View'
+    'View',
+    'DataType'
 ]

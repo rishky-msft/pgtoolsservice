@@ -19,7 +19,7 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
 class Server:
-    def __init__(self, conn: connection):
+    def __init__(self, conn: 'connection'):
         """
         Initializes a server object using the provided connection
         :param conn: psycopg2 connection
