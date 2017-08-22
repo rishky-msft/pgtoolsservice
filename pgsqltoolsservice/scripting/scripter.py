@@ -40,7 +40,7 @@ class Scripter(object):
             script = obj.create_script()
 
             return script
-        except Exception:
+        except Exception as e:
             # need to handle exceptions well
             return None
 
@@ -82,7 +82,7 @@ class Scripter(object):
         parent_schema = None
         try:
             if database.schemas is not None:
-                parent_schema = database.schemas.get(schema_name)
+                parent_schema = database.schemas[schema_name]
                 if parent_schema is not None:
                     return parent_schema
 
