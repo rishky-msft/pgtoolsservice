@@ -8,8 +8,8 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Database, Server, Table, DataType, Schema
-from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
+from pgsmo import Database, Table, DataType, Schema
+from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsqltoolsservice.scripting.scripter import Scripter
 
@@ -30,7 +30,7 @@ class TestScripter(unittest.TestCase):
         self.database = Database(self.server, 'test')
         self.server._databases = self._as_node_collection([self.database])
         self.schema = Schema(self.server, self.server.maintenance_db, 'myschema')
-        self.scripter.server.maintenance_db._schemas =  self._as_node_collection([self.schema])
+        self.scripter.server.maintenance_db._schemas = self._as_node_collection([self.schema])
 
     # Tests ##################################################################
 
@@ -70,7 +70,6 @@ class TestScripter(unittest.TestCase):
         # TODO
         self._verify_update_script(object_metadata, ['ALTER TYPE None', 'OWNER TO Me', 'RENAME TO test', 'SET SCHEMA myschema'])
         self._verify_delete_script(object_metadata, ['DROP TYPE myschema.test'])
-
 
     def test_script_select_escapes_non_lowercased_words(self):
         """ Tests scripting for select operations"""

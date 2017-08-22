@@ -5,10 +5,9 @@
 
 from typing import Optional, List, Any
 
-from pgsmo.objects.node_object import NodeObject, NodeLazyPropertyCollection
+from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
-import pgsmo.utils.querying as querying
 
 TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 MACRO_ROOT = templating.get_template_root(__file__, 'macros')
@@ -45,7 +44,6 @@ class DataType(NodeObject):
         """
         super(DataType, self).__init__(server, parent, name)
         self._additional_properties: NodeLazyPropertyCollection = self._register_property_collection(self._additional_property_generator)
-
 
     # PROPERTIES ###########################################################
     @property
@@ -117,7 +115,7 @@ class DataType(NodeObject):
         composite = []
         # TODO support composite, which is a complex property
         return composite
-        
+    
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:

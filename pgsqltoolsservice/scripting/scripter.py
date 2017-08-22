@@ -132,7 +132,7 @@ class Scripter(object):
         """
         Find an object that is a child of a schema object.
         :param prop_name: name of the property used to query for objects
-        of this type on the schema 
+        of this type on the schema
         :param metadata: metadata including object name and schema name
         """
         try:
