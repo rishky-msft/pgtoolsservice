@@ -3,10 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.server.server import Server
+from pgsmo import Server, Schema
+from pgsmo.utils.templating import qt_ident
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
-from pgsmo.objects.database.database import Database
-from pgsmo.objects.node_object import NodeCollection
 
 
 class Scripter(object):
@@ -23,11 +22,9 @@ class Scripter(object):
 
     def script_as_select(self, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
-        schema = metadata.schema
-        name = metadata.name
-        # wrap quotes only around objects with all small letters
-        name = f'"{name}"' if name.islower() else name
-        script = f"SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n"
+        schema = qt_ident(None, metadata.schema)
+        name = qt_ident(None, metadata.name)
+        script = f'SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n'
         return script
 
     # CREATE ##################################################################
@@ -40,7 +37,7 @@ class Scripter(object):
             obj = self._get_object(object_type, metadata)
 
             # get the create script
-            script = obj.create_script(self.connection)
+            script = obj.create_script()
 
             return script
         except Exception:
@@ -56,7 +53,7 @@ class Scripter(object):
             obj = self._get_object(object_type, metadata)
 
             # get the delete script
-            script = obj.delete_script(self.connection)
+            script = obj.delete_script()
             return script
         except Exception:
             return None
@@ -71,30 +68,25 @@ class Scripter(object):
             obj = self._get_object(object_type, metadata)
 
             # get the update script
-            script = obj.update_script(self.connection)
+            script = obj.update_script()
             return script
         except Exception:
             return None
 
     # HELPER METHODS ##########################################################
 
-    def _get_schema_from_db(self, schema_name: str, databases: NodeCollection[Database]):
-        try:
-            schema = databases[schema_name]
-            return schema
-        except NameError:
-            return None
-
-    def _find_schema(self, metadata: ObjectMetadata):
+    def _find_schema(self, metadata: ObjectMetadata) -> Schema:
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
         database = self.server.maintenance_db
         parent_schema = None
         try:
             if database.schemas is not None:
-                parent_schema = self._get_schema_from_db(schema_name, database.schemas)
+                parent_schema = database.schemas.get(schema_name)
                 if parent_schema is not None:
                     return parent_schema
+
+            return None
         except Exception:
             return None
 
