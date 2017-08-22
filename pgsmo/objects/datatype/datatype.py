@@ -10,13 +10,15 @@ from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
 
+TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+
 
 class DataType(NodeObject):
     """Represents a data type"""
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Type':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'DataType':
         """
         Creates a Type object from the result of a DataType node query
         :param server: Server that owns the DataType
@@ -29,19 +31,19 @@ class DataType(NodeObject):
             rolsuper bool: Whether or not the DataType is a super user
         :return: A DataType7 instance
         """
-        datatype = cls(server, kwargs['name'])
+        datatype = cls(server, parent, kwargs['name'])
 
         # Define values from node query
         datatype._oid = kwargs['oid']
         return datatype
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         """
         Initializes internal state of a DataType object
         :param server: Server that owns the role
         :param name: Name of the role
         """
-        super(DataType, self).__init__(server, None, name)
+        super(DataType, self).__init__(server, parent, name)
         self._additional_properties: NodeLazyPropertyCollection = self._register_property_collection(self._additional_property_generator)
 
 
@@ -86,7 +88,7 @@ class DataType(NodeObject):
 
     @property
     def schema(self):
-        return self._full_properties.get("schema", "")
+        return self.parent.name
 
     @property
     def typname(self):
@@ -119,22 +121,31 @@ class DataType(NodeObject):
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
+        return TEMPLATE_ROOT
+
+    @classmethod
+    def _macro_root(cls) -> List[str]:
+        return [MACRO_ROOT]
 
     # SCRIPTING METHODS ####################################################
 
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a DataType """
         data = self._create_query_data()
         query_file = "create.sql"
-        return self._get_template(connection, query_file, data)
+        return self._get_template(query_file, data, paths_to_add=self._macro_root())
 
-    def update_script(self, connection: querying.ServerConnection) -> str:
+    def update_script(self) -> str:
         """ Function to retrieve update scripts for a DataType """
         data = self._update_query_data()
         query_file = "update.sql"
-        filters = {'hasAny': templating.has_any}
-        return self._get_template(connection, query_file, data, filters_to_add=filters)
+        return self._get_template(query_file, data, paths_to_add=self._macro_root())
+
+    def delete_script(self) -> str:
+        """ Function to retrieve delete scripts for datatype """
+        data = self._delete_query_data()
+        query_file = "delete.sql"
+        return self._get_template(query_file, data)
 
     # HELPER METHODS ##################################################################
 
@@ -142,38 +153,47 @@ class DataType(NodeObject):
         """ Gives the data object for create query """
         # TODO support composite data type properties
         # TODO support enum value
-        return {"data": {
-            "name": self.name,
-            "schema": self.schema,
-            "typtype": self.typtype,
-            "collname": self.collname,
-            "opcname": self.opcname,
-            "rngcanonical": self.rngcanonical,
-            "rngsubdiff": self.rngsubdiff,
-            "description": self.description,
-            "composite": self.composite
-        }}
+        return {
+            "data": {
+                "name": self.name,
+                "schema": self.schema,
+                "typtype": self.typtype,
+                "collname": self.collname,
+                "opcname": self.opcname,
+                "rngcanonical": self.rngcanonical,
+                "rngsubdiff": self.rngsubdiff,
+                "description": self.description,
+                "composite": self.composite
+            }
+        }
 
     def _update_query_data(self):
         """ Gives the data object for update query """
         return {
             "data": {
-                "rolname": self.name,
+                "name": self.name,
                 "typeowner": self.typeowner,
                 "description": self.description,
                 "schema": self.schema,
-                "rolcreaterole": self.createrole,
-                "rolinherit": self.inherit,
-                "rolreplication": self.replication,
-                "rolconnlimit": self.connlimit,
-                "rolvaliduntil": self.validuntil,
-                "rolpassword": self.password,
-                "rolcatupdate": self.catupdate,
-                "revoked_admins": self.revoked_admins,
-                "revoked": self.revoked,
-                "admins": self.admins,
-                "members": self.members,
-                "variables": self.variables,
-                "description": self.description
-            }, "rolCanLogin": self.can_login
+            },
+            # This will cause UPDATE statements for changes to all these props to be output
+            "o_data": {
+                "name": "",
+                "typeowner": "",
+                "description": "",
+                "schema": ""
+            }
         }
+
+    def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
+        data = {
+            "data": {
+                "name": self.name,
+                "schema": self.parent.name
+            },
+            # See issue https://github.com/Microsoft/carbon/issues/1715, Cascade should be configured
+            # as part of the input to the delete method as it's not a property
+            "cascade": False
+        }
+        return data

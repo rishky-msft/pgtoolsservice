@@ -118,12 +118,13 @@ class Collation(node.NodeObject):
 
     def _update_query_data(self) -> dict:
         """ Provides data input for update script """
-        data = {"data": {
-            "name": self.name,
-            "owner": self.owner,
-            "description": self.description,
-            "schema": self.schema
-        },
+        data = {
+            "data": {
+                "name": self.name,
+                "owner": self.owner,
+                "description": self.description,
+                "schema": self.schema
+            },
             "o_data": {
                 "name": "",
                 "owner": "",

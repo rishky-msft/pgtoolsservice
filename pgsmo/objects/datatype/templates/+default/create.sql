@@ -4,9 +4,9 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/schemas/security.macros' as SECLABEL %}
-{% import 'macros/schemas/privilege.macros' as PRIVILEGE %}
-{% import 'type/macros/get_full_type_sql_format.macros' as GET_TYPE %}
+{% import 'security.macros' as SECLABEL %}
+{% import 'privilege.macros' as PRIVILEGE %}
+{% import 'get_full_type_sql_format.macros' as GET_TYPE %}
 {## If user selected shell type then just create type template ##}
 {% if data and data.typtype == 'p' %}
 CREATE TYPE {{ conn|qtIdent(data.schema, data.name) }};
