@@ -21,7 +21,6 @@ from pgsmo.objects.table.table import Table
 from pgsmo.objects.tablespace.tablespace import Tablespace
 from pgsmo.objects.functions.trigger_function import TriggerFunction
 from pgsmo.objects.view.view import View
-from pgsmo.objects.datatype.datatype import DataType
 
 __all__ = [
     'CheckConstraint',

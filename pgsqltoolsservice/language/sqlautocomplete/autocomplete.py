@@ -63,6 +63,7 @@ class MatchMode(enum.Enum):
     Strict = "Strict"
     Fuzzy = "Fuzzy"
 
+
 class Matcher:
     """
     Handles matching suggestions, with handling of escaping, keyword lookup and more
@@ -105,7 +106,6 @@ class Matcher:
     def escaped_names(self, names: List[str]) -> List[str]:
         """Escapes a list of names"""
         return [self.escape_name(name) for name in names]
-
 
     def find_matches(self, script_file: ScriptFile, text_range: Range, collection: List[Any], mode=MatchMode.Fuzzy,
                      meta=None) -> List[Match]:
@@ -238,11 +238,10 @@ class SuggestionMatcher():
         return list(self.schemas.keys())
 
     def _get_schema(self, schema_name: str) -> Schema:
-        """Attempts to find a schema given its name, or returns all schemas if not found"""
-        schemas: List[Schema] = []
-        if (schema_name):
+        """Attempts to find a schema given its name, or returns None if not found"""
+        if schema_name:
             schema = next(s for s in self.schemas if s.name == schema_name)
-            if (schema):
+            if schema:
                 return schema
         return None
 
@@ -342,7 +341,6 @@ class SuggestionMatcher():
             obj_type:
         """
         objects = []
-        
         # Get the schemas to iterate over
         schema = self._get_schema(schema_name)
         schemas: List[Schema] = [schema] if schema else self.schemas     
@@ -351,9 +349,9 @@ class SuggestionMatcher():
             object_matches = getattr(schema, obj_type)
         
         if (schema):
-        in_clause = ''
-        query = ''
-        objects = []
+            in_clause = ''
+            query = ''
+            objects = []
 
         if schema:
             in_clause = '\'' + schema + '\''
@@ -387,6 +385,7 @@ class SuggestionMatcher():
                     objects.append(record['object_name'])
 
         return objects
+
 
 class SQLAutoComplete(object):
     """

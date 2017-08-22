@@ -115,7 +115,7 @@ class DataType(NodeObject):
         composite = []
         # TODO support composite, which is a complex property
         return composite
-    
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:

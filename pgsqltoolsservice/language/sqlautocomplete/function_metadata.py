@@ -10,6 +10,7 @@ from sqlparse.tokens import Whitespace, Comment, Keyword, Name, Punctuation
 
 table_def_regex = re.compile(r'^TABLE\s*\((.+)\)$', re.IGNORECASE)
 
+
 class FunctionMetadata(object):
 
     def __init__(self, schema_name, func_name, arg_list, return_type, is_aggregate,

@@ -117,8 +117,7 @@ def extract_from_part(parsed, stop_at_punctuation=True):
         # So this check here is necessary.
         elif isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
-                if (identifier.ttype is Keyword and
-                            identifier.value.upper() == 'FROM'):
+                if (identifier.ttype is Keyword and identifier.value.upper() == 'FROM'):
                     tbl_prefix_seen = True
                     break
 
@@ -285,4 +284,4 @@ def parse_partial_identifier(word):
 
 if __name__ == '__main__':
     sql = 'select * from (select t. from tabl t'
-    print (extract_tables(sql))
+    print(extract_tables(sql))
