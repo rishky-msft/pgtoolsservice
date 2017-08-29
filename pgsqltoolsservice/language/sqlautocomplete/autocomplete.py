@@ -234,7 +234,8 @@ class SuggestionMatcher():
         for schema in database.schemas:
             self.schemas[schema.name] = schema
 
-    def _schema_names(self):
+    @property
+    def _schema_names(self) -> List[str]:
         return list(self.schemas.keys())
 
     def _get_schema(self, schema_name: str) -> Schema:
@@ -264,6 +265,8 @@ class SuggestionMatcher():
 
         return self.matcher.find_matches(word_before_cursor, scoped_cols, mode='strict', meta='column')
 
+    def _populate_scoped_cols(self, tables))
+
     def get_function_matches(self, suggestion, word_before_cursor):
         if suggestion.filter == 'is_set_returning':
             # Only suggest set-returning functions
@@ -280,12 +283,10 @@ class SuggestionMatcher():
         return funcs
 
     def get_schema_matches(self, _, word_before_cursor):
-        schema_names = self._schema_names
-
         # Unless we're sure the user really wants them, hide schema names
         # starting with pg_, which are mostly temporary schemas
         if not word_before_cursor.startswith('pg_'):
-            schema_names = [s for s in schema_names if not s.startswith('pg_')]
+            schema_names = [s for s in self._schema_names if not s.startswith('pg_')]
 
         return self.matcher.find_matches(word_before_cursor, schema_names, mode='strict', meta='schema')
 
