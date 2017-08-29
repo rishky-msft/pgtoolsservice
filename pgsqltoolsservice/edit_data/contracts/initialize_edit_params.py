@@ -4,21 +4,30 @@
 # --------------------------------------------------------------------------------------------
 
 
+from typing import Optional # noqa
+
+
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class InitializeEditParams:
+class EditInitializerFilter(Serializable):
+
+    def __init__(self):
+        self.limit_results: Optional[int] = None
+
+
+class InitializeEditParams(Serializable):
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+    def get_child_serializable_types(cls):
+        return {'filters': EditInitializerFilter}
 
     def __init__(self):
         self.owner_uri: str = None
         self.schema_name: str = None
         self.object_type: str = None
         self.object_name: str = None
-        self.filters = None
+        self.filters: EditInitializerFilter = None
 
 
 INITIALIZE_EDIT_REQUEST = IncomingMessageConfiguration('edit/initialize', InitializeEditParams)

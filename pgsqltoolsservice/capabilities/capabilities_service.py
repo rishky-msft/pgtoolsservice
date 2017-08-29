@@ -13,7 +13,7 @@ from pgsqltoolsservice.capabilities.contracts import (
     InitializeRequestParams,
     InitializeResult, ServerCapabilities, TextDocumentSyncKind
 )
-from pgsqltoolsservice.disaster_recovery import BACKUP_OPTIONS
+from pgsqltoolsservice.disaster_recovery.contracts import BACKUP_OPTIONS, RESTORE_OPTIONS
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
 
@@ -193,7 +193,7 @@ class CapabilitiesService:
                 group_name='Client'
             )
         ])
-        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts, [BACKUP_OPTIONS])
+        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts, [BACKUP_OPTIONS, RESTORE_OPTIONS])
         result = CapabilitiesResult(capabilities)
 
         # Send the response
@@ -210,8 +210,8 @@ class CapabilitiesService:
             text_document_sync=TextDocumentSyncKind.INCREMENTAL,
             definition_provider=False,
             references_provider=False,
-            document_formatting_provider=False,
-            document_range_formatting_provider=False,
+            document_formatting_provider=True,
+            document_range_formatting_provider=True,
             document_highlight_provider=False,
             hover_provider=False,
             completion_provider=CompletionOptions(True, ['.', '-', ':', '\\', '[', '"'])
