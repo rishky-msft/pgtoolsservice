@@ -23,7 +23,7 @@ from pgsqltoolsservice.query_execution.contracts import (
     BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams,
     BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
     DISPOSE_REQUEST, SIMPLE_EXECUTE_REQUEST, SimpleExecuteRequest, ExecuteStringParams,
-    SimpleExecuteResponse
+    SimpleExecuteResponse, ColumnParams, COLUMN_REQUEST
 )
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams
 from pgsqltoolsservice.query_execution.contracts.common import (
@@ -74,7 +74,8 @@ class QueryExecutionService(object):
             CANCEL_REQUEST: self._handle_cancel_query_request,
             SIMPLE_EXECUTE_REQUEST: self._handle_simple_execute_request,
             DISPOSE_REQUEST: self._handle_dispose_request,
-            QUERY_EXECUTION_PLAN_REQUEST: self._handle_query_execution_plan_request
+            QUERY_EXECUTION_PLAN_REQUEST: self._handle_query_execution_plan_request,
+            COLUMN_REQUEST: self._handle_column_request
         }
 
     def register(self, service_provider: ServiceProvider):
@@ -200,6 +201,12 @@ class QueryExecutionService(object):
             params.rows_start_index + params.rows_count)
 
         return SubsetResult(result_set_subset)
+
+    def _handle_column_request(self, request_context: RequestContext, params: ColumnParams):
+        """Sends a respond back to the query/columns requester"""
+        columns = self.query_results[params.owner_uri].batches[params.batch_index].result_set.columns
+        request_context.send_response(columns)
+
 
     def _handle_cancel_query_request(self, request_context: RequestContext, params: QueryCancelParams):
         """Handles a 'query/cancel' request"""

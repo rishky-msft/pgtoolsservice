@@ -14,7 +14,7 @@ from pgsqltoolsservice.query_execution.contracts.execute_request import (
 )
 from pgsqltoolsservice.query_execution.contracts.query_request import (
     SubsetParams, SUBSET_REQUEST, QueryCancelParams, CANCEL_REQUEST,
-    QueryDisposeParams, DISPOSE_REQUEST
+    QueryDisposeParams, DISPOSE_REQUEST, ColumnParams, COLUMN_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.message_notification import (
     MessageNotificationParams,
@@ -53,6 +53,6 @@ __all__ = [
     'SUBSET_REQUEST', 'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams',
     'QueryDisposeParams', 'QUERY_EXECUTION_PLAN_REQUEST', 'QueryExecutionPlanRequest', 'DISPOSE_REQUEST',
     'SIMPLE_EXECUTE_REQUEST', 'SimpleExecuteRequest', 'SimpleExecuteResponse', 'EXECUTE_DOCUMENT_STATEMENT_REQUEST',
-    'ExecuteDocumentStatementParams'
+    'ExecuteDocumentStatementParams', 'ColumnParams', 'COLUMN_REQUEST'
 
 ]

@@ -20,6 +20,16 @@ class SubsetParams(Serializable):
 
 SUBSET_REQUEST = IncomingMessageConfiguration('query/subset', SubsetParams)
 
+class ColumnParams:
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary)
+
+    def __init__(self):
+        self.owner_uri: str = None
+        self.batch_index: int = None
+
+COLUMN_REQUEST = IncomingMessageConfiguration('query/columns', ColumnParams)
 
 class QueryCancelParams(Serializable):
 
