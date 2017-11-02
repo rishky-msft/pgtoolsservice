@@ -6,6 +6,7 @@
 import io
 from typing import Callable, Any  # noqa
 import struct
+import time
 
 from pgsqltoolsservice.converters.bytes_converter import get_bytes_converter
 from pgsqltoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
@@ -30,46 +31,79 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
 
         ServiceBufferFileStream.__init__(self, stream)
 
-    def _write_null(self):
-        val_byte_array = bytearray([])
-        return self._write_to_file(self._file_stream, val_byte_array)
+    # def _write_null(self):
+    #     val_byte_array = bytearray([])
+    #     return self._write_to_file(self._file_stream, val_byte_array)
 
-    def _write_to_file(self, stream, byte_array):
-        try:
-            written_byte_number = stream.write(byte_array)
-        except Exception as exc:
-            raise IOError(ServiceBufferFileStreamWriter.WRITER_DATA_WRITE_ERROR) from exc
+    # def _write_to_file(self, stream, byte_array):
+    #     try:
+    #         written_byte_number = stream.write(byte_array)
+    #     except Exception as exc:
+    #         raise IOError(ServiceBufferFileStreamWriter.WRITER_DATA_WRITE_ERROR) from exc
 
-        return written_byte_number
+    #     return written_byte_number
 
-    def write_row(self, reader: StorageDataReader):
+    def write_row(self, reader: StorageDataReader, duration1, duration2, duration3, duration4, duration5, duration6, duration7, duration8, duration9):
         """   Write a row to a file   """
         # Define a object list to store multiple columns in a row
-        len_columns_info = len(reader.columns_info)
-        values = []
+        start1 = time.time() #-----------
+        tmp_columns_info = reader._columns_info
+        len_columns_info = len(tmp_columns_info)
+        #values = []
+        cur_value = 0
+        duration1 += time.time() - start1 #-----------
 
         # Loop over all the columns and write the values to the temp file
         row_bytes = 0
-        for index in range(0, len_columns_info):
 
-            column = reader.columns_info[index]
+        start2 = time.time() #-----------
+        range_func = range(len_columns_info)
+        duration2 += time.time() - start2 #-----------
+        for index in range_func:
 
-            values.append(reader.get_value(index))
+            start3 = time.time() #-----------
+            column = tmp_columns_info[index]
+            duration3 += time.time() - start3 #-----------
+            
+            start4 = time.time() #-----------
+            #values.append(reader.get_value(index))
+            #values.append(reader._current_row[index])
+            cur_value = reader._current_row[index]            
+            duration4 += time.time() - start4 #-----------
+
+            start5 = time.time() #-----------
             type_value = column.data_type
+            duration5 += time.time() - start5 #-----------
 
             # Write the object into the temp file
             if reader.is_none(index):
-                row_bytes += self._write_null()
+                #row_bytes += self._write_null()
+                row_bytes += self._file_stream.write(bytearray([]))
             else:
+                start6 = time.time() #-----------
                 bytes_converter: Callable[[str], bytearray] = get_bytes_converter(type_value)
-                value_to_write = bytes_converter(values[index])
+                duration6 += time.time() - start6 #-----------
+                
+                start7 = time.time() #-----------
+                #value_to_write = bytes_converter(values[index])
+                value_to_write = bytes_converter(cur_value)
+                duration7 += time.time() - start7 #-----------
 
+                start8 = time.time() #-----------
                 bytes_length_to_write = len(value_to_write)
+                duration8 += time.time() - start8 #-----------
+                
+                start9 = time.time() #-----------
+                # row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("i", bytes_length_to_write)))
+                # row_bytes += self._write_to_file(self._file_stream, value_to_write)
+                try:
+                    row_bytes += self._file_stream.write(bytearray(struct.pack("i", bytes_length_to_write)))
+                    row_bytes += self._file_stream.write(value_to_write)                
+                except Exception as exc:
+                    raise IOError(ServiceBufferFileStreamWriter.WRITER_DATA_WRITE_ERROR) from exc
+                duration9 += time.time() - start9 #-----------
 
-                row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("i", bytes_length_to_write)))
-                row_bytes += self._write_to_file(self._file_stream, value_to_write)
-
-        return row_bytes
+        return [row_bytes, duration1, duration2, duration3, duration4, duration5, duration6, duration7, duration8, duration9]
 
     def seek(self, offset):
         self._file_stream.seek(offset, io.SEEK_SET)

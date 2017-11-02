@@ -9,7 +9,7 @@ from pgsqltoolsservice.query.result_set import ResultSet, ResultSetEvents
 from pgsqltoolsservice.query.data_storage import service_buffer_file_stream as file_stream, StorageDataReader
 from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset  # noqa
 import pgsqltoolsservice.utils as utils
-
+import time
 
 class FileStorageResultSet(ResultSet):
 
@@ -84,11 +84,34 @@ class FileStorageResultSet(ResultSet):
 
         with file_stream.get_writer(self._output_file_name) as writer:
 
+            duration1, duration2, duration3, duration4, duration5, duration6, duration7, duration8, duration9 = 0,0,0,0,0,0,0,0,0
+
+            start = time.time()
+            print(start)
+
             while storage_data_reader.read_row():
                 self._file_offsets.append(self._total_bytes_written)
-                self._total_bytes_written += writer.write_row(storage_data_reader)
+                #self._total_bytes_written += writer.write_row(storage_data_reader)
+                temp_res = writer.write_row(storage_data_reader, duration1, duration2, duration3, duration4, duration5, duration6, duration7,duration8,duration9)
+                self._total_bytes_written += temp_res[0]
+
+                duration1, duration2, duration3, duration4, duration5, duration6, duration7, duration8,duration9 = temp_res[1],temp_res[2],temp_res[3],temp_res[4],temp_res[5],temp_res[6], temp_res[7], temp_res[8], temp_res[9]
 
             self.columns_info = storage_data_reader.columns_info
+
+            end = time.time()
+            print(end)
+            print("writer: ", end - start)
+            print("duration1: ", duration1)
+            print("duration2: ", duration2)
+            print("duration3: ", duration3)
+            print("duration4: ", duration4)
+            print("duration5: ", duration5)
+            print("duration6: ", duration6)
+            print("duration7: ", duration7)
+            print("duration8: ", duration8)
+            print("duration9: ", duration9)
+
 
     def _append_row_to_buffer(self, cursor):
 
