@@ -36,7 +36,7 @@ def integration_test(min_version=None, max_version=None):
                 _ConnectionManager.run_test(test, min_version, max_version, *args)
             finally:
                 _ConnectionManager.current_test_is_integration_test = False
-                _ConnectionManager.drop_test_databases()
+                # _ConnectionManager.drop_test_databases()
         new_test.is_integration_test = True
         new_test.__name__ = test.__name__
         return new_test

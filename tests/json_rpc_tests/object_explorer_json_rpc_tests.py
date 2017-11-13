@@ -12,6 +12,8 @@ from pgsqltoolsservice.hosting.json_message import JSONRPCMessageType
 from tests.integration import get_connection_details, create_extra_test_database, integration_test
 from tests.json_rpc_tests import JSONRPCTestCase, DefaultRPCTestMessages, RPCTestMessage
 from tests.json_rpc_tests.object_explorer_test_metadata import META_DATA, CREATE_SCRIPTS, GET_OID_SCRIPTS
+from pgsqltoolsservice.scripting.scripter import Scripter
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 
 
 class ObjectExplorerJSONRPCTests(unittest.TestCase):
@@ -28,6 +30,8 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
         connection_details['dbname'] = self.args["Databases_Name"]
         connection_messages = DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
         test_messages = [connection_messages[0], connection_messages[1]]
+
+        self.test_object_crud_scripts(META_DATA, connection_details)
 
         expected_session_id = f'objectexplorer://{connection_details["user"]}@{connection_details["host"]}:{self.args["Databases_Name"]}/'
 
@@ -84,6 +88,17 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
 
         JSONRPCTestCase(test_messages).run()
 
+    def test_object_crud_scripts(self, meta_data: dict, connection_details: dict):
+        connection = psycopg2.connect(**connection_details)
+        scripter = Scripter(connection)
+        object_metadata: ObjectMetadata = ObjectMetadata()
+        # object_metadata.metadata_type_name = meta_data["type"]
+        # object_metadata.schema = scripting_object["schema"]
+        # object_metadata.name = scripting_object["name"]
+    
+        # script = scripter.script('CREATE', object_metadata)
+        pass
+
     def create_database_objects(self, meta_data: dict, connection: 'psycopg2.connection', **kwargs):
 
         for key, metadata_value in meta_data.items():
@@ -96,6 +111,8 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
                     metadata_value['Name'] = dbname
                     kwargs[key + '_Name'] = dbname
                     connection_details = get_connection_details()
+                    # metadata_value['Name'] = connection_details["dbname"]
+                    # kwargs[key + '_Name'] = connection_details["dbname"]
                     connection_details['dbname'] = dbname
                     connection = psycopg2.connect(**connection_details)
                     connection.autocommit = True
