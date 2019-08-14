@@ -12,7 +12,6 @@ xlsxwriter
 jinja2
 
 # Build/Test Requirements
-cx_freeze==5.0.2
 nose
 parameterized
 coverage
