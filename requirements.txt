@@ -11,7 +11,7 @@ xlsxwriter
 jinja2
 
 # Build/Test Requirements
-cx_freeze==5.0.2
+cx_freeze==6.1
 nose
 parameterized
 coverage
@@ -19,3 +19,4 @@ autopep8
 flake8==3.7.0
 ptvsd==2.2.0
 python-dateutil
+pycodestyle==2.5.0
