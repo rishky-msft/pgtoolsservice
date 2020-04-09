@@ -10,7 +10,7 @@ old_pythonpath=$PYTHONPATH
 # Build the program
 cd $dirname/..
 PYTHONPATH=
-pip3 install -r requirements.txt
+python3 -m pip3 install -r requirements.txt
 python3 setup.py build
 
 # Restore the old PYTHONPATH and move back to the original directory
