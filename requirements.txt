@@ -16,6 +16,6 @@ nose
 parameterized
 coverage
 autopep8
-flake8==3.7.0
+flake8==3.8.0
 ptvsd==2.2.0
 python-dateutil
