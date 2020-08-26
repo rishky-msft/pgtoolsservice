@@ -1,0 +1,9 @@
+Name: libpgtypes
+Description: PostgreSQL libpgtypes library
+Url: http://www.postgresql.org/
+Version: 11.9
+Requires: 
+Requires.private: 
+Cflags: -I/Library/PostgreSQL/11/include
+Libs: -L/Library/PostgreSQL/11/lib -lpgtypes
+Libs.private: -L/opt/local/20180529/lib -L/opt/local/Current/lib -L/opt/local/libexec/llvm-6.0/lib -lm
