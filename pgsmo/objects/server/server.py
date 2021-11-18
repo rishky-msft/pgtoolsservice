@@ -183,7 +183,14 @@ class Server:
 
     def find_function(self, metadata):
         """ Find the function in the server to script as """
-        return self.find_schema_child_object('functions', metadata)
+        maintenance_db = self._maintenance_db_name
+        database = self.databases[maintenance_db]
+        obj_collection = getattr(database, 'functions')
+        if not obj_collection:
+            return None
+
+        obj = next((object for object in obj_collection if object.name.split('(')[0] == metadata.name[:-2]), None)
+        return obj
 
     def find_database(self, metadata):
         """ Find a database in the server """
