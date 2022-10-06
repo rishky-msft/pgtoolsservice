@@ -11,12 +11,9 @@ from ossdbtoolsservice.admin.contracts import (GET_DATABASE_INFO_REQUEST,
                                                GetDatabaseInfoParameters,
                                                GetDatabaseInfoResponse)
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from ossdbtoolsservice.utils import constants
-from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from tests.pgsmo_tests.utils import MockPGServerConnection
-from tests.utils import MockPsycopgCursor, MockRequestContext
+from tests.utils import MockPyMySQLConnection, MockPyMySQLCursor, MockRequestContext
 
 
 class TestAdminService(unittest.TestCase):
@@ -48,8 +45,8 @@ class TestAdminService(unittest.TestCase):
 
         # Set up a mock connection and cursor for the test
         mock_query_results = [(user_name,)]
-        mock_cursor = MockPsycopgCursor(mock_query_results)
-        mock_connection = MockPGServerConnection(mock_cursor, name=db_name)
+        mock_cursor = MockPyMySQLCursor(mock_query_results)
+        mock_connection = MockPyMySQLConnection(mock_cursor, name=db_name)
         self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
 
         # If I send a get_database_info request
@@ -64,26 +61,3 @@ class TestAdminService(unittest.TestCase):
         # And the service retrieved the owner name using a query with the database name as a parameter
         owner_query = "SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{}'".format(db_name)
         mock_cursor.execute.assert_called_once_with(owner_query)
-
-    @integration_test
-    def test_get_database_info_request_integration(self):
-        # Set up the request parameters
-        params = GetDatabaseInfoParameters()
-        params.owner_uri = 'test_uri'
-        request_context = MockRequestContext()
-
-        # Set up the connection service to return our connection
-        connection = PostgreSQLConnection(get_connection_details())
-        self.connection_service.get_connection = mock.Mock(return_value=connection)
-
-        # If I send a get_database_info request
-        self.admin_service._handle_get_database_info_request(request_context, params)
-
-        # Then the service responded with a valid database owner
-        owner = request_context.last_response_params.database_info.options['owner']
-
-        cursor = connection.cursor()
-        cursor.execute('select usename from pg_catalog.pg_user')
-        usernames = [row[0] for row in cursor.fetchall()]
-        self.assertIn(owner, usernames)
-        connection.close()
