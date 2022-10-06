@@ -11,7 +11,6 @@ import json
 import datetime
 
 from ossdbtoolsservice.parsers import pg_datatypes as datatypes
-from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 DECODING_METHOD = 'utf-8'
 
@@ -92,34 +91,6 @@ def convert_memoryview(value: memoryview):
 
 def convert_dict(value: dict):
     return bytearray(json.dumps(value).encode())
-
-
-def convert_numericrange(value: NumericRange):
-    """ Serialize NumericRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_to_string(value.lower) + "," + convert_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_datetimerange(value: DateTimeRange):
-    """ Serialize DateTimeRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_datetimetzrange(value: DateTimeTZRange):
-    """ Serialize DateTimeTZRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_daterange(value: DateRange):
-    """ Serialize DateRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
 
 
 def convert_list(value: list):
@@ -224,12 +195,6 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BYTEA: convert_memoryview,
     datatypes.DATATYPE_JSON: convert_dict,
     datatypes.DATATYPE_JSONB: convert_dict,
-    datatypes.DATATYPE_INT4RANGE: convert_numericrange,
-    datatypes.DATATYPE_INT8RANGE: convert_numericrange,
-    datatypes.DATATYPE_NUMRANGE: convert_numericrange,
-    datatypes.DATATYPE_TSRANGE: convert_datetimerange,
-    datatypes.DATATYPE_TSTZRANGE: convert_datetimetzrange,
-    datatypes.DATATYPE_DATERANGE: convert_daterange,
     datatypes.DATATYPE_OID: convert_int,
     datatypes.DATATYPE_SMALLINT_ARRAY: convert_list,
     datatypes.DATATYPE_INTEGER_ARRAY: convert_list,
