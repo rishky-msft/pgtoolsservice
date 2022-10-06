@@ -15,14 +15,13 @@ from ossdbtoolsservice.query.contracts import (SaveResultsRequestParams,
 from ossdbtoolsservice.query.file_storage_result_set import \
     FileStorageResultSet
 from ossdbtoolsservice.query.in_memory_result_set import InMemoryResultSet
-from tests.pgsmo_tests.utils import MockPGServerConnection
 
 
 class TestBatch(unittest.TestCase):
 
     def setUp(self):
-        self._cursor = utils.MockPsycopgCursor(None)
-        self._connection = MockPGServerConnection(cur=self._cursor)
+        self._cursor = utils.MockPyMySQLCursor(None)
+        self._connection = utils.MockPyMySQLConnection(cur=self._cursor)
         self._batch_text = 'Select * from t1'
         self._batch_id = 1
         self._batch_events = BatchEvents()

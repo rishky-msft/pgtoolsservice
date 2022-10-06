@@ -8,13 +8,12 @@ import unittest
 import unittest.mock as mock
 from typing import Optional
 
-import psycopg2
 import pymysql
 
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
-from pgsmo import Server
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
+from mysqlsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 
 
@@ -66,7 +65,7 @@ def get_mock_logger() -> logging.Logger:
 
 # PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
 # This mock will be deprecated #
-def get_mock_service_provider(service_map: dict = None, provider_name: Optional[str] = PG_PROVIDER_NAME) -> ServiceProvider:
+def get_mock_service_provider(service_map: dict = None, provider_name: Optional[str] = MYSQL_PROVIDER_NAME) -> ServiceProvider:
     """
     Generates a ServiceProvider with the given services
 
@@ -107,8 +106,7 @@ class MockRequestContext(RequestContext):
         self.last_error_message = str(ex)
 
 
-class MockPsycopgConnection(object):
-    """Class used to mock psycopg2 connection objects for testing"""
+    """Class used to mock pymysql connection objects for testing"""
 
     def __init__(self, dsn_parameters=None, cursor=None):
         self.close = mock.Mock()
@@ -118,7 +116,6 @@ class MockPsycopgConnection(object):
         self.get_backend_pid = mock.Mock(return_value=0)
         self.notices = []
         self.autocommit = True
-        self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
         self.commit = mock.Mock()
 
     @property
@@ -136,74 +133,6 @@ class MockPsycopgConnection(object):
             return self.server_version
         else:
             raise NotImplementedError()
-
-
-class MockPsycopgCursor:
-    """Class used to mock psycopg2 cursor objects for testing"""
-
-    def __init__(self, query_results, columns_names=[], connection=mock.Mock()):
-        self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
-        self.fetchall = mock.Mock(return_value=query_results)
-        self.fetchone = mock.Mock(side_effect=self.execute_fetch_one_side_effects)
-        self.close = mock.Mock()
-        self.connection = connection
-        self.description = [self.create_column_description(name=name) for name in columns_names]
-        self.rowcount = -1
-        self._mogrified_value = b'Some query'
-        self.mogrify = mock.Mock(return_value=self._mogrified_value)
-        self._query_results = query_results
-        self._fetched_count = 0
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        next_row = self.execute_fetch_one_side_effects()
-
-        if next_row is None:
-            raise StopIteration
-
-        return next_row
-
-    def execute_success_side_effects(self, *args):
-        """Set up dummy results for query execution success"""
-        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        self.rowcount = len(self._query_results) if self._query_results is not None else 0
-
-    def execute_failure_side_effects(self, *args):
-        """Set up dummy results and raise error for query execution failure"""
-        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        raise psycopg2.DatabaseError()
-
-    def execute_fetch_one_side_effects(self, *args):
-        if self._fetched_count < len(self._query_results):
-            row = self._query_results[self._fetched_count]
-            self._fetched_count += 1
-            return row
-
-    def create_column_description(self, **kwargs):
-        description = {
-            'name': None,
-            'type_code': None,
-            'display_size': None,
-            'internal_size': None,
-            'precision': None,
-            'scale': None,
-            'null_ok': None
-        }
-        merge = {**description, **dict(kwargs)}
-        return tuple(merge.values())
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        pass
-
-    @property
-    def mogrified_value(self):
-        return self._mogrified_value
-
 
 class MockPyMySQLCursor:
     """Class used to mock pymysql cursor objects for testing"""
