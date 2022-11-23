@@ -12,9 +12,11 @@ cd $dirname/..
 PYTHONPATH=
 pip3 install -r requirements.txt
 python3 setup.py bdist_mac
-cd build/*.app/Contents
-cp -r MacOS/ ../../pgtoolsservice
 
 # Restore the old PYTHONPATH and move back to the original directory
 cd $pwd
 PYTHONPATH=$old_pythonpath
+
+cd build
+mv exe* mysqltoolsservice
+tar -cvzf mysqltoolsservice-osx.tar.gz mysqltoolsservice
