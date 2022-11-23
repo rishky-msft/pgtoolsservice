@@ -4,16 +4,24 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+- master-mysql-extension
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: macOS-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.10.6'
+- task: Bash@3
+  inputs:
+    filePath: 'scripts/build-mac.sh'
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)'
+    contents: 'build/mysqltoolsservice-osx.tar.gz'
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: build
