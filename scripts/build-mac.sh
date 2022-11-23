@@ -19,4 +19,5 @@ PYTHONPATH=$old_pythonpath
 
 cd build
 mv exe* mysqltoolsservice
+cp mysqltoolsservice/lib* mysqltoolsservice/lib/.
 tar -cvzf mysqltoolsservice-osx.tar.gz mysqltoolsservice
