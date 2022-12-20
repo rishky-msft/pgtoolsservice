@@ -1,23 +1,2 @@
 # Shared Requirements
-psycopg2-binary==2.9.3
-PyMySQL==0.9.3
-
-# PGToolsService Requirements
-inflection==0.5.1
-sqlparse==0.4.3
-prompt_toolkit==3.0.31
-xlsxwriter==3.0.3
-
-# PGSMO Requirements
-jinja2==3.1.2
-
-# Build/Test Requirements
-cx_freeze==6.13.1
-nose==1.3.7
-parameterized==0.8.1
-coverage==6.4.4
-autopep8==1.5.2
-flake8==3.7.0
-debugpy==1.5.1
-python-dateutil==2.8.2
-pydevd==2.8.0
+mysql-connector-python

@@ -15,13 +15,4 @@ steps:
     versionSpec: '3.10.6'
 - task: Bash@3
   inputs:
-    filePath: 'scripts/build-mac.sh'
-- task: CopyFiles@2
-  inputs:
-    sourceFolder: '$(Build.SourcesDirectory)'
-    contents: 'build/mysqltoolsservice-osx.tar.gz'
-    targetFolder: '$(Build.ArtifactStagingDirectory)'
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: build
+    filePath: 'test-build.sh'
