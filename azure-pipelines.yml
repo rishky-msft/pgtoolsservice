@@ -4,7 +4,7 @@
 # https://aka.ms/yaml
 
 trigger:
-- master-mysql-extension
+- nitishsharma/test-branch1
 
 pool:
   vmImage: macOS-latest
