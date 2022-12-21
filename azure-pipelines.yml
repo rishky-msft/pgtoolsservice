@@ -7,7 +7,7 @@ trigger:
 - nitishsharma/test-branch1
 
 pool:
-  vmImage: macOS-latest
+  vmImage: ubuntu-latest
 
 steps:
 - task: UsePythonVersion@0
