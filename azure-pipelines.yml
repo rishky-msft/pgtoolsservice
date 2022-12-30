@@ -7,19 +7,19 @@ trigger:
 - master-mysql-extension
 
 pool:
-  vmImage: ubuntu-20.04
+  vmImage: windows-latest
 
 steps:
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '3.10'
-- task: Bash@3
+- task: Powershell@2
   inputs:
-    filePath: 'scripts/build-linux.sh'
+    filePath: 'scripts/build.ps1'
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)'
-    contents: 'build/mysqltoolsservice-linux-x64.tar.gz'
+    contents: 'build/mysqltoolsservice-win-x64.zip'
     targetFolder: '$(Build.ArtifactStagingDirectory)'
 - task: PublishBuildArtifacts@1
   inputs:
