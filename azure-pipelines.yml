@@ -7,7 +7,7 @@ trigger:
 - master-mysql-extension
 
 pool:
-  vmImage: ubuntu-22.04
+  vmImage: ubuntu-20.04
 
 steps:
 - task: UsePythonVersion@0
@@ -16,11 +16,10 @@ steps:
 - task: Bash@3
   inputs:
     filePath: 'scripts/build-linux.sh'
-    arguments: 'ubuntu22'
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)'
-    contents: 'build/mysqltoolsservice-ubuntu22-x64.tar.gz'
+    contents: 'build/mysqltoolsservice-linux-x64.tar.gz'
     targetFolder: '$(Build.ArtifactStagingDirectory)'
 - task: PublishBuildArtifacts@1
   inputs:
