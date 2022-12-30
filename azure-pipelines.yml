@@ -7,7 +7,7 @@ trigger:
 - master-mysql-extension
 
 pool:
-  vmImage: macOS-latest
+  vmImage: ubuntu-22.04
 
 steps:
 - task: UsePythonVersion@0
@@ -15,11 +15,12 @@ steps:
     versionSpec: '3.10'
 - task: Bash@3
   inputs:
-    filePath: 'scripts/build-mac.sh'
+    filePath: 'scripts/build-linux.sh'
+    arguments: 'ubuntu22'
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)'
-    contents: 'build/mysqltoolsservice-osx.tar.gz'
+    contents: 'build/mysqltoolsservice-ubuntu22-x64.tar.gz'
     targetFolder: '$(Build.ArtifactStagingDirectory)'
 - task: PublishBuildArtifacts@1
   inputs:
